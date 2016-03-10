@@ -1,4 +1,4 @@
-\documentclass[doctor]{thuthesis}
+\documentclass[type=master]{thuthesis}
 
 \ifxetex
   \setCJKfamilyfont{zhfs}[RawFeature={vertical:}]{FangSong}
@@ -7,14 +7,20 @@
 \fi
 
 \begin{document}
-\cauthor{薛瑞尼}
-\ctitle{没有英文的中文标题}
+\thusetup{
+  cauthor={薛瑞尼},
+  ctitle={没有英文的中文标题}
+}
 
-\shuji
+\shuji % 使用默认标题和默认作者
+
+\shuji[使用默认作者的标题]
+
+\shuji[同时修改标题和作者的标题][尼瑞薛]
 
 \ifxetex
-\shuji[清华大学学位\hspace{0.2em}\raisebox{-5pt}{\LaTeX}\hspace{-0.25em} 论文模板 \hspace{0.1em}\raisebox{-5pt}{v\version}\hspace{-0.25em} 样例]
+  \shuji[清华大学学位 \raisebox{-5pt}{\LaTeX} 论文模板 \raisebox{-5pt}{v\version} 样例]
 \else
-\shuji[清华大学学位\hspace{0.2em}\raisebox{8pt}{\LaTeX}\hspace{-0.25em} 论文模板 \hspace{0.1em}\raisebox{8pt}{v\version}\hspace{-0.25em} 样例]
+  \shuji[清华大学学位 \raisebox{8pt}{\LaTeX} 论文模板 \raisebox{8pt}{v\version} 样例]
 \fi
 \end{document}

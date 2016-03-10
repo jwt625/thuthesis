@@ -1,6 +1,6 @@
 # Makefile for ThuThesis
 
-# Compiling method: latexmk/xelatex/pdflatex/dvipdfmx
+# Compiling method: latexmk/xelatex/pdflatex
 METHOD = latexmk
 # Set opts for latexmk if you use it
 LATEXMKOPTS = -xelatex
@@ -9,163 +9,87 @@ THESISMAIN = main
 # Basename of shuji
 SHUJIMAIN = shuji
 
-ifeq ($(MAKE),)
-	override MAKE = make
-endif
-
-ifeq ($(TEXI2DVI),)
-	override TEXI2DVI = texi2dvi
-endif
-
 PACKAGE=thuthesis
 SOURCES=$(PACKAGE).ins $(PACKAGE).dtx
-THESISCONTENTS=$(THESISMAIN).tex data/*.tex $(EPS)
+THESISCONTENTS=$(THESISMAIN).tex data/*.tex $(FIGURES)
 # NOTE: update this to reflect your local file types.
-EPS=$(wildcard figures/*.eps)
+FIGURES=$(wildcard figures/*.eps figures/*.pdf)
 BIBFILE=ref/*.bib
 SHUJICONTENTS=$(SHUJIMAIN).tex
 CLSFILES=dtx-style.sty $(PACKAGE).cls $(PACKAGE).cfg
 
 # make deletion work on Windows
 ifdef SystemRoot
-   RM = del /Q
-   SLASH = \\
+	RM = del /Q
+	OPEN = start
 else
-   RM = rm -f
-   SLASH = /
+	RM = rm -f
+	OPEN = open
 endif
 
-.PHONY: all clean distclean dist thesis shuji doc cls FORCE_MAKE
+.PHONY: all clean distclean dist thesis viewthesis shuji viewshuji doc viewdoc cls check FORCE_MAKE
 
 all: doc thesis shuji
 
-###### generate cls/cfg
 cls: $(CLSFILES)
 
 $(CLSFILES): $(SOURCES)
 	latex $(PACKAGE).ins
 
-###### for doc
+viewdoc: doc
+	$(OPEN) $(PACKAGE).pdf
 
 doc: $(PACKAGE).pdf
 
-ifeq ($(METHOD),xelatex)
-
-$(PACKAGE).pdf: $(CLSFILES)
-	xelatex $(PACKAGE).dtx
-	makeindex -s gind.ist -o $(PACKAGE).ind $(PACKAGE).idx
-	makeindex -s gglo.ist -o $(PACKAGE).gls $(PACKAGE).glo
-	xelatex $(PACKAGE).dtx
-	xelatex $(PACKAGE).dtx
-
-else ifeq ($(METHOD),pdflatex)
-
-$(PACKAGE).pdf: $(CLSFILES)
-	pdflatex $(PACKAGE).dtx
-	makeindex -s gind.ist -o $(PACKAGE).ind $(PACKAGE).idx
-	makeindex -s gglo.ist -o $(PACKAGE).gls $(PACKAGE).glo
-	pdflatex $(PACKAGE).dtx
-	pdflatex $(PACKAGE).dtx
-
-else ifeq ($(METHOD),latexmk)
-
-$(PACKAGE).pdf: $(CLSFILES) FORCE_MAKE
-	latexmk $(LATEXMKOPTS) $(PACKAGE).dtx
-
-else
-
-$(PACKAGE).dvi: $(CLSFILES)
-	latex $(PACKAGE).dtx
-	makeindex -s gind.ist -o $(PACKAGE).ind $(PACKAGE).idx
-	makeindex -s gglo.ist -o $(PACKAGE).gls $(PACKAGE).glo
-	latex $(PACKAGE).dtx
-	latex $(PACKAGE).dtx
-
-$(PACKAGE).pdf: $(PACKAGE).dvi
-	latex $(PACKAGE).dtx
-	dvipdfmx  $(PACKAGE).dvi
-
-endif
-
-###### for thesis
+viewthesis: thesis
+	$(OPEN) $(THESISMAIN).pdf
 
 thesis: $(THESISMAIN).pdf
 
-ifeq ($(METHOD),xelatex)
+viewshuji: shuji
+	$(OPEN) $(SHUJIMAIN).pdf
 
-$(THESISMAIN).pdf: $(CLSFILES) $(THESISCONTENTS) $(THESISMAIN).bbl
-	xelatex $(THESISMAIN).tex
-	xelatex $(THESISMAIN).tex
-
-$(THESISMAIN).bbl: $(BIBFILE)
-	xelatex $(THESISMAIN).tex
-	-bibtex $(THESISMAIN)
-	$(RM) $(THESISMAIN).pdf
-
-else ifeq ($(METHOD),pdflatex)
-
-$(THESISMAIN).pdf: $(CLSFILES) $(THESISCONTENTS) $(THESISMAIN).bbl
-	pdflatex $(THESISMAIN).tex
-	pdflatex $(THESISMAIN).tex
-
-$(THESISMAIN).bbl: $(BIBFILE)
-	pdflatex $(THESISMAIN).tex
-	-bibtex $(THESISMAIN)
-	$(RM) $(THESISMAIN).pdf
-
-else ifeq ($(METHOD),latexmk)
-
-$(THESISMAIN).pdf: $(CLSFILES) FORCE_MAKE
-	latexmk $(LATEXMKOPTS) $(THESISMAIN)
-
-else
-
-$(THESISMAIN).pdf: $(THESISMAIN).dvi
-	latex $(THESISMAIN).tex
-	dvipdfmx $(THESISMAIN).dvi
-
-$(THESISMAIN).dvi: $(CLSFILES) $(THESISCONTENTS) $(THESISMAIN).bbl
-	$(TEXI2DVI) $(THESISMAIN).tex
-
-$(THESISMAIN).bbl: $(BIBFILE)
-	$(TEXI2DVI) $(THESISMAIN).tex
-	-bibtex $(THESISMAIN)
-
-endif
-
-
-###### for shuji
 shuji: $(SHUJIMAIN).pdf
 
-ifeq ($(METHOD),xelatex)
+ifeq ($(METHOD),latexmk)
 
-$(SHUJIMAIN).pdf: $(CLSFILES) $(SHUJICONTENTS)
-	xelatex $(SHUJIMAIN).tex
+$(PACKAGE).pdf: $(CLSFILES) FORCE_MAKE
+	$(METHOD) $(LATEXMKOPTS) $(PACKAGE).dtx
 
-else ifeq ($(METHOD),pdflatex)
-
-$(SHUJIMAIN).pdf: $(CLSFILES) $(SHUJICONTENTS)
-	pdflatex $(SHUJIMAIN).tex
-
-else ifeq ($(METHOD),latexmk)
+$(THESISMAIN).pdf: $(CLSFILES) FORCE_MAKE
+	$(METHOD) $(LATEXMKOPTS) $(THESISMAIN)
 
 $(SHUJIMAIN).pdf: $(CLSFILES) FORCE_MAKE
-	latexmk $(LATEXMKOPTS) $(SHUJIMAIN)
+	$(METHOD) $(LATEXMKOPTS) $(SHUJIMAIN)
+
+else ifneq (,$(filter $(METHOD),xelatex pdflatex))
+
+$(PACKAGE).pdf: $(CLSFILES)
+	$(METHOD) $(PACKAGE).dtx
+	makeindex -s gind.ist -o $(PACKAGE).ind $(PACKAGE).idx
+	makeindex -s gglo.ist -o $(PACKAGE).gls $(PACKAGE).glo
+	$(METHOD) $(PACKAGE).dtx
+	$(METHOD) $(PACKAGE).dtx
+
+$(THESISMAIN).pdf: $(CLSFILES) $(THESISCONTENTS) $(THESISMAIN).bbl
+	$(METHOD) $(THESISMAIN)
+	$(METHOD) $(THESISMAIN)
+
+$(THESISMAIN).bbl: $(BIBFILE)
+	$(METHOD) $(THESISMAIN)
+	-bibtex $(THESISMAIN)
+	$(RM) $(THESISMAIN).pdf
+
+$(SHUJIMAIN).pdf: $(CLSFILES) $(SHUJICONTENTS)
+	$(METHOD) $(SHUJIMAIN)
 
 else
-
-$(SHUJIMAIN).dvi: $(CLSFILES) $(SHUJICONTENTS)
-	$(TEXI2DVI) $(SHUJIMAIN).tex
-
-$(SHUJIMAIN).pdf: $(SHUJIMAIN).dvi
-	latex $(SHUJIMAIN).tex
-	dvipdfmx $(SHUJIMAIN).dvi
+$(error Unknown METHOD: $(METHOD))
 
 endif
 
 clean:
 	latexmk -c $(PACKAGE).dtx $(THESISMAIN) $(SHUJIMAIN)
-	-@$(RM) $(PACKAGE).dvi $(THESISMAIN).dvi $(SHUJIMAIN).dvi
 	-@$(RM) *~
 
 cleanall: clean
@@ -175,9 +99,12 @@ distclean: cleanall
 	-@$(RM) $(CLSFILES)
 	-@$(RM) -r dist
 
-dist:
-	@if [ -z "$(VERSION)" ]; then \
-		echo "Usage: make dist VERSION=<version#>"; \
+check: FORCE_MAKE
+	ag 'Tsinghua University Thesis Template|\\def\\version|"version":' thuthesis.dtx package.json
+
+dist: all
+	@if [ -z "$(version)" ]; then \
+		echo "Usage: make dist version=[x.y.z | ctan]"; \
 	else \
-		./makedist.sh $(VERSION); \
+		gulp build --version=$(version); \
 	fi
